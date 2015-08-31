@@ -4,27 +4,19 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.openmrs.Cohort;
 import org.openmrs.api.context.Context;
-import org.openmrs.module.pharmacyreports.api.reporting.provider.MonthlyReportProvider;
+import org.openmrs.module.pharmacyreports.api.reporting.provider.MonthlyAttendanceReport;
 import org.openmrs.module.reporting.ReportingConstants;
-import org.openmrs.module.reporting.cohort.definition.CohortDefinition;
-import org.openmrs.module.reporting.cohort.definition.service.CohortDefinitionService;
 import org.openmrs.module.reporting.evaluation.EvaluationContext;
-import org.openmrs.module.reporting.evaluation.parameter.Parameter;
 import org.openmrs.module.reporting.report.ReportData;
 import org.openmrs.module.reporting.report.ReportDesign;
 import org.openmrs.module.reporting.report.definition.ReportDefinition;
 import org.openmrs.module.reporting.report.definition.service.ReportDefinitionService;
 import org.openmrs.module.reporting.report.renderer.ExcelTemplateRenderer;
-import org.openmrs.util.OpenmrsUtil;
 import org.openmrs.web.WebConstants;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.SessionAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -61,23 +53,15 @@ public class PharmacyMonthlyReportsController {
 		Date startDate = sdf.parse(effectiveDate);
 		Date endDate = new Date();
 
-		MonthlyReportProvider queuedReport = new MonthlyReportProvider();
+		MonthlyAttendanceReport queuedReport = new MonthlyAttendanceReport();
 
 		try{
-			CohortDefinition cohortDefinition = queuedReport.getCohortDefinition();
-			cohortDefinition.addParameter(new Parameter("effectiveDate", "Effective Date", Date.class));
 
 			ReportDefinition reportDefinition = queuedReport.getReportDefinition();
 			EvaluationContext evaluationContext = new EvaluationContext();
 			evaluationContext.setEvaluationDate(endDate);
 			evaluationContext.addParameterValue(ReportingConstants.START_DATE_PARAMETER.getName(), startDate);
-			//evaluationContext.addParameterValue(ReportingConstants.END_DATE_PARAMETER.getName(), endDate);
-
-
-			// get the cohort
-			CohortDefinitionService cohortDefinitionService = Context.getService(CohortDefinitionService.class);
-			Cohort cohort = cohortDefinitionService.evaluate(cohortDefinition, evaluationContext);
-			evaluationContext.setBaseCohort(cohort);
+			evaluationContext.addParameterValue(ReportingConstants.END_DATE_PARAMETER.getName(), endDate);
 
 			ReportData reportData = Context.getService(ReportDefinitionService.class)
 					.evaluate(reportDefinition, evaluationContext);
@@ -106,7 +90,7 @@ public class PharmacyMonthlyReportsController {
 			xlsFile.delete();
 		}  catch (Exception e){
 			e.getMessage();
-			//e.printStackTrace();
+			e.printStackTrace();
 		}
 		return "redirect:pharmacyReport.form";
 	}
